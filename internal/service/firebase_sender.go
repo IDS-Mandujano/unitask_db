@@ -53,6 +53,35 @@ func (s *FirebaseSender) SendToTokens(tokens []string, title string, body string
 		return fmt.Errorf("send multicast failed: %w", err)
 	}
 
+	// Detallar exactamente qué pasó con cada token
+	fmt.Printf("\n📊 Firebase Send Report:\n")
+	fmt.Printf("  Total tokens: %d\n", len(tokens))
+	fmt.Printf("  ✅ Success: %d\n", response.SuccessCount)
+	fmt.Printf("  ❌ Failed: %d\n", response.FailureCount)
+
+	successTokens := make([]string, 0)
+	failedTokens := make([]string, 0)
+
+	for i, resp := range response.Responses {
+		if resp.Success {
+			successTokens = append(successTokens, tokens[i][:20]+"...")
+		} else if resp.Error != nil {
+			failedTokens = append(failedTokens, fmt.Sprintf("token[%d]: %v", i, resp.Error))
+		}
+	}
+
+	if len(successTokens) > 0 {
+		fmt.Printf("  ✅ Tokens entregados: %d\n", len(successTokens))
+	}
+
+	if len(failedTokens) > 0 {
+		fmt.Printf("  ❌ Tokens fallidos:\n")
+		for _, fail := range failedTokens {
+			fmt.Printf("     - %s\n", fail)
+		}
+	}
+	fmt.Printf("\n")
+
 	if response.SuccessCount == 0 {
 		errors := make([]string, 0, len(response.Responses))
 		for i, resp := range response.Responses {
@@ -61,7 +90,7 @@ func (s *FirebaseSender) SendToTokens(tokens []string, title string, body string
 			}
 		}
 		if len(errors) == 0 {
-			return fmt.Errorf("send multicast failed: 0/%d entregadas", len(tokens))
+			return fmt.Errorf("send multicast failed: 0/%d entregadas (sin detalles de error)", len(tokens))
 		}
 		return fmt.Errorf("send multicast failed: 0/%d entregadas (%s)", len(tokens), strings.Join(errors, "; "))
 	}
