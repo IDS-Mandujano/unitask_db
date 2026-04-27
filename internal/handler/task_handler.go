@@ -89,7 +89,9 @@ func (h *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error al crear tarea", 500)
 		return
 	}
-	w.WriteHeader(201) // [cite: 135]
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	json.NewEncoder(w).Encode(t)
 }
 
 // Esta función es la que te faltaba para que el GET no truene

@@ -6,7 +6,7 @@ import (
 )
 
 type mysqlTask struct {
-	db              *sql.DB
+	db               *sql.DB
 	hasTeacherFields bool
 }
 
@@ -29,8 +29,15 @@ func taskHasTeacherFields(db *sql.DB) bool {
 
 func (r *mysqlTask) CreateTask(t *domain.Task) error {
 	query := "INSERT INTO tasks (subject_id, title, description, due_date, is_completed) VALUES (?, ?, ?, ?, ?)"
-	_, err := r.db.Exec(query, t.SubjectID, t.Title, t.Description, t.DueDate, t.IsCompleted)
-	return err
+	result, err := r.db.Exec(query, t.SubjectID, t.Title, t.Description, t.DueDate, t.IsCompleted)
+	if err != nil {
+		return err
+	}
+	id, err := result.LastInsertId()
+	if err == nil {
+		t.ID = int(id)
+	}
+	return nil
 }
 
 func (r *mysqlTask) GetAllTasks() ([]domain.Task, error) {
